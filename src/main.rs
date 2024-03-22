@@ -6,13 +6,18 @@ use std::{
     time::Duration,
 };
 
+use hey_there::ThreadPool;
+
 fn main() {
     let listener = TcpListener::bind("localhost:42069").unwrap();
+    let t_pool = ThreadPool::new(4);
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
-        handle_connection(stream)
+        t_pool.execute(|| {
+            handle_connection(stream);
+        });
     }
 }
 
