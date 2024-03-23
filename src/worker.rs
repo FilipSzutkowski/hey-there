@@ -4,8 +4,8 @@ use std::{
 };
 
 pub struct Worker {
-    id: usize,
-    thread: JoinHandle<()>,
+    pub id: usize,
+    pub thread: Option<JoinHandle<()>>,
 }
 
 pub type Job = Box<dyn FnOnce() + Send + 'static>;
@@ -15,13 +15,23 @@ type JobReceiver = mpsc::Receiver<Job>;
 impl Worker {
     pub fn new(id: usize, receiver: Arc<Mutex<JobReceiver>>) -> Worker {
         let thread = thread::spawn(move || loop {
-            let job = receiver.lock().unwrap().recv().unwrap();
+            let job = receiver.lock().unwrap().recv();
 
-            println!("Worker '{id}': got a job, executing.");
-
-            job();
+            match job {
+                Ok(job) => {
+                    println!("Worker '{id}': got a job, executing.");
+                    job();
+                }
+                Err(_) => {
+                    println!("Worker '{id}': Shutting down.");
+                    break;
+                }
+            }
         });
 
-        Worker { id, thread }
+        Worker {
+            id,
+            thread: Some(thread),
+        }
     }
 }
