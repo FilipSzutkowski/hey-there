@@ -1,6 +1,15 @@
-use std::error::Error;
+mod worker;
 
-pub struct ThreadPool;
+use std::{
+    error::Error,
+    sync::{mpsc, Arc, Mutex},
+};
+use worker::{Job, Worker};
+
+pub struct ThreadPool {
+    workers: Vec<Worker>,
+    sender: mpsc::Sender<Job>,
+}
 
 impl ThreadPool {
     /// Create a new ThreadPool.
@@ -15,12 +24,24 @@ impl ThreadPool {
             return Err("Specified thread number can't be less than one.".into());
         }
 
-        Ok(ThreadPool)
+        let (sender, receiver) = mpsc::channel();
+        let receiver = Arc::new(Mutex::new(receiver));
+
+        let mut workers = Vec::with_capacity(size);
+
+        for i in 0..size {
+            workers.push(Worker::new(i, Arc::clone(&receiver)));
+        }
+
+        Ok(ThreadPool { workers, sender })
     }
 
     pub fn execute<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static,
     {
+        let job = Box::new(f);
+
+        self.sender.send(job).unwrap();
     }
 }
