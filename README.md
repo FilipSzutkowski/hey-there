@@ -4,11 +4,9 @@ Hey There is a small web server that serves an index page and a 404 page on all 
 
 ## Concepts
 
-- Handling a simple TCP listener
-- Parsing and creating HTTP requests from scratch
-- Serving static files
-
-### Will be added
-
-- Multithreading for concurrent requests
-- Error handling
+- Handling a simple TCP listener.
+- Parsing and creating HTTP requests from scratch.
+- Serving static files.
+- Multithreading for concurrent requests:
+  - Thread pooling with a limited number of threads.
+  - Message queue for sending jobs to thread workers.
